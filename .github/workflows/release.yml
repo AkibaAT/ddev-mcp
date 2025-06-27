@@ -1,0 +1,90 @@
+name: GitHub Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Setup DDEV
+      uses: ddev/github-action-setup-ddev@v1
+      with:
+        autostart: false
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build TypeScript
+      run: npm run build
+      
+    - name: Run tests (if available)
+      run: npm test --if-present
+      
+    - name: Get package info
+      id: package
+      run: |
+        echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+        echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        
+    - name: Create NPM package
+      run: npm pack
+      
+    # NPM publishing disabled - focusing on GitHub releases first
+    # - name: Publish to NPM
+    #   run: npm publish
+    #   env:
+    #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## Changes
+
+          Release ${{ steps.package.outputs.version }} of DDEV MCP Server
+
+          ### Installation
+
+          Download the NPM package below and install locally:
+          ```bash
+          npm install -g ./${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.tgz
+          ```
+
+          ### Alternative Installation (Build from Source)
+
+          ```bash
+          git clone https://github.com/AkibaAT/ddev-mcp.git
+          cd ddev-mcp
+          git checkout ${{ github.ref_name }}
+          npm install && npm run build
+          npm install -g .
+          ```
+
+          ### Requirements
+
+          - Node.js 20+ (cross-platform)
+          - DDEV installed and accessible
+
+          See README.md for configuration and usage instructions.
+        files: |
+          ${{ steps.package.outputs.name }}-${{ steps.package.outputs.version }}.tgz
+        draft: false
+        prerelease: false

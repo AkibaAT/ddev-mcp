@@ -1,0 +1,7 @@
+*.ts
+tsconfig.json
+src/
+node_modules/
+.git/
+test*.js
+*.log
