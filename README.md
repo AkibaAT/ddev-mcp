@@ -1,10 +1,36 @@
 # DDEV MCP Server
 
-A Model Context Protocol (MCP) server for managing DDEV projects. This server provides LLM applications with tools to interact with DDEV projects through standardized MCP protocol.
+## Overview
+
+This project provides a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that enables Large 
+Language Models (LLMs) and AI assistants to interact with [DDEV](https://ddev.com/) local development environments.
+
+Features include:
+
+- 🗄️ **Query databases directly** - Execute SQL queries, inspect schemas, and analyze data in your DDEV MySQL/PostgreSQL databases
+- 🚀 **Manage DDEV projects** - Start, stop, restart projects and check their status
+- 🔧 **Execute development commands** - Run Composer, access logs, control Xdebug, and execute shell commands in containers
+- 🛡️ **Maintain security** - Whitelist-based protection ensures only safe operations are allowed by default
+
+**Use Cases:**
+- **Database Development**: "Show me all users with pending orders" → LLM queries your local database directly
+- **Debugging**: "Check the error logs for the last hour" → LLM retrieves and analyzes DDEV service logs
+- **Project Management**: "Start my e-commerce project and check if the database is ready" → LLM manages your DDEV environment
+- **Schema Analysis**: "What's the relationship between users and orders tables?" → LLM inspects your actual database structure
+- **Development Workflow**: "Run the latest migrations and show me the updated schema" → LLM executes commands and verifies results
 
 ## Features
 
 ### Tools
+
+#### Database Operations
+- `ddev_db_backup` - Create database snapshots
+- `ddev_db_describe_table` - Get table structure/schema (PostgreSQL \d or MySQL DESCRIBE)
+- `ddev_db_list_backups` - List available database backups
+- `ddev_db_list_databases` - List all databases (PostgreSQL \l or MySQL SHOW DATABASES)
+- `ddev_db_list_tables` - List all tables in the database (auto-detects database type)
+- `ddev_db_query` - Execute SQL queries with detailed error reporting (supports PostgreSQL, MySQL, MariaDB)
+- `ddev_db_restore` - Restore from database snapshots
 
 #### Project Management
 - `ddev_list_projects` - List all DDEV projects with status
@@ -29,24 +55,12 @@ A Model Context Protocol (MCP) server for managing DDEV projects. This server pr
 - `ddev_export_db` - Export database dumps
 - `ddev_import_db` - Import database dumps
 
-#### Database Operations
-- `ddev_db_backup` - Create database snapshots
-- `ddev_db_describe_table` - Get table structure/schema (PostgreSQL \d or MySQL DESCRIBE)
-- `ddev_db_list_backups` - List available database backups
-- `ddev_db_list_databases` - List all databases (PostgreSQL \l or MySQL SHOW DATABASES)
-- `ddev_db_list_tables` - List all tables in the database (auto-detects database type)
-- `ddev_db_query` - Execute SQL queries with detailed error reporting (supports PostgreSQL, MySQL, MariaDB)
-- `ddev_db_restore` - Restore from database snapshots
-
 **🔒 Security Features:** 
 - **Whitelist Security Model**: Only explicitly allowed read-only operations are permitted (default deny)
 - **Comprehensive Protection**: Blocks hundreds of potentially dangerous operations by default
 - **Write Protection**: All data modification blocked by default unless `--allow-write` is used
 - **Catastrophic Operation Blocking**: DROP DATABASE, SHUTDOWN, file operations always blocked
 - **Configuration Protection**: Blocks SET, FLUSH, GRANT, and other config changes
-- **Future-Proof**: New/unknown SQL commands automatically blocked
-
-**Enhanced Error Handling:** All database operations preserve original database error messages, including syntax errors, missing tables, permission issues, and connection problems. Follows MCP specification with `isError: true` flag for tool execution failures, allowing LLMs to understand and potentially recover from errors.
 
 ### Resources
 - `ddev://current` - Current project context and server configuration
@@ -55,7 +69,8 @@ A Model Context Protocol (MCP) server for managing DDEV projects. This server pr
 ## Security Features
 
 **🔒 Whitelist Security Model (Default Deny)**
-The MCP server uses a comprehensive whitelist approach where only explicitly allowed read-only operations are permitted. Any query not matching the whitelist is automatically blocked.
+The MCP server uses a comprehensive whitelist approach where only explicitly allowed read-only operations are permitted. 
+Any query not matching the whitelist is automatically blocked.
 
 ### ✅ Allowed Operations (Whitelist)
 - `SELECT` - Data queries and joins
@@ -65,16 +80,6 @@ The MCP server uses a comprehensive whitelist approach where only explicitly all
 - `WITH ... SELECT` - Common Table Expressions (read-only)
 - PostgreSQL meta-commands (`\dt`, `\d`, `\l`, etc.)
 - System catalog queries (`INFORMATION_SCHEMA`, `pg_catalog`)
-
-### ❌ Blocked Operations (Not in Whitelist)
-- **Data Modification**: `INSERT`, `UPDATE`, `DELETE`, `REPLACE`, `TRUNCATE`
-- **Schema Changes**: `DROP`, `CREATE`, `ALTER`, `RENAME`
-- **Configuration**: `SET`, `RESET`, `FLUSH`, `OPTIMIZE`
-- **Permissions**: `GRANT`, `REVOKE`, `CREATE USER`
-- **Transactions**: `BEGIN`, `COMMIT`, `ROLLBACK`
-- **System Admin**: `CALL`, `EXECUTE`, `HANDLER`, `LOCK`
-- **File Operations**: `LOAD DATA`, `SELECT INTO OUTFILE`
-- **And hundreds of other potentially dangerous operations**
 
 ### 🚫 Always Blocked (Even with --allow-write)
 - `DROP DATABASE` / `DROP SCHEMA` - Catastrophic deletions
@@ -215,7 +220,8 @@ This will:
 ```
 
 
-**Use Case:** Perfect when working on a single project and you want a clean, dedicated interface without repetitive project parameters.
+**Use Case:** Perfect when working on a single project and you want a clean, dedicated interface without repetitive 
+project parameters.
 
 #### Enable Write Operations (Use with Caution)
 ```json
@@ -240,7 +246,8 @@ This will:
 }
 ```
 
-**Use Case:** When working with multiple DDEV projects, you can specify `project_name` or `project_path` for each command. All tools will show project selection parameters.
+**Use Case:** When working with multiple DDEV projects, you can specify `project_name` or `project_path` for each command. 
+All tools will show project selection parameters.
 
 #### Multiple Dedicated Servers (Different projects and security levels)
 ```json
@@ -258,7 +265,8 @@ This will:
 }
 ```
 
-**Use Case:** Separate MCP servers for different projects with different security levels (e.g., read-only for production, write-enabled for development).
+**Use Case:** Separate MCP servers for different projects with different security levels (e.g., read-only for production, 
+write-enabled for development).
 
 ### Configuration Summary
 
@@ -278,7 +286,8 @@ Configuration file locations depend on your MCP client. Common examples:
 ## Project Context Features
 
 **🎯 Intelligent Project Context**
-When you configure single project mode, the MCP server provides rich contextual information to LLMs through the `ddev://current` resource.
+When you configure single project mode, the MCP server provides rich contextual information to LLMs through the 
+`ddev://current` resource.
 
 ### Current Project Information
 
